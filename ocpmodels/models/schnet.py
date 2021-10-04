@@ -83,9 +83,20 @@ class SchNetWrap(SchNet):
             readout=readout,
         )
 
+        # Overwrite the original SchNet
+        # self.act = torch.nn.Tanh()
+        self.lin2 = torch.nn.Linear(hidden_channels // 2, 118)
+
     @conditional_grad(torch.enable_grad())
     def _forward(self, data):
         z = data.atomic_numbers.long()
+
+        mult_out = True
+        if mult_out is True:
+            z_onehot = torch.FloatTensor(len(z), 118)
+            z_onehot.zero_()
+            z_onehot.scatter_(1, (z - 1).reshape(-1, 1), 1)
+        # print(z_onehot[0])
         pos = data.pos
         batch = data.batch
 
@@ -118,20 +129,30 @@ class SchNetWrap(SchNet):
             for interaction in self.interactions:
                 h = h + interaction(h, edge_index, edge_weight, edge_attr)
 
+            emb = h
             h = self.lin1(h)
             h = self.act(h)
             h = self.lin2(h)
-
+            # print(z_onehot.shape)
+            # print(h.shape)
+            if mult_out is True:
+                h = torch.sum(h * z_onehot, dim=1)
+            # print(batch.shape)
             batch = torch.zeros_like(z) if batch is None else batch
+            # print(batch.shape)
+            # print(batch)
+
             energy = scatter(h, batch, dim=0, reduce=self.readout)
         else:
             energy = super(SchNetWrap, self).forward(z, pos, batch)
-        return energy
+        # return energy#, emb
+        return energy, emb
 
     def forward(self, data):
         if self.regress_forces:
             data.pos.requires_grad_(True)
-        energy = self._forward(data)
+        # energy = self._forward(data)
+        energy, emb = self._forward(data)
 
         if self.regress_forces:
             forces = -1 * (
@@ -142,9 +163,11 @@ class SchNetWrap(SchNet):
                     create_graph=True,
                 )[0]
             )
-            return energy, forces
+            return energy, forces, emb
+            # return energy, forces
         else:
-            return energy
+            # return energy
+            return energy, emb
 
     @property
     def num_params(self):

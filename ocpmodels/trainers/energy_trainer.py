@@ -370,13 +370,16 @@ class EnergyTrainer(BaseTrainer):
             self.test_dataset.close_db()
 
     def _forward(self, batch_list):
-        output = self.model(batch_list)
+        energy, emb = self.model(batch_list)
+        # energy, emb = self.model(batch_list)
+        # print(emb.shape, energy.shape)
 
-        if output.shape[-1] == 1:
-            output = output.view(-1)
+        if energy.shape[-1] == 1:
+            energy = energy.view(-1)
 
         return {
-            "energy": output,
+            "energy": energy,
+            # "emb": emb,
         }
 
     def _compute_loss(self, out, batch_list):

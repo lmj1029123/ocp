@@ -278,7 +278,13 @@ class ForcesTrainer(BaseTrainer):
             self.normalizers["target"].to(self.device)
             self.normalizers["grad_target"].to(self.device)
 
-        predictions = {"id": [], "energy": [], "forces": [], "chunk_idx": []}
+        predictions = {
+            "id": [],
+            "energy": [],
+            "forces": [],
+            "chunk_idx": [],
+            "emb": [],
+        }
 
         for i, batch_list in tqdm(
             enumerate(data_loader),
@@ -317,6 +323,17 @@ class ForcesTrainer(BaseTrainer):
                 per_image_forces = [
                     force.numpy() for force in per_image_forces
                 ]
+
+                emb = (
+                    out["emb"].cpu().detach().to(torch.float16)
+                )  # Embedding Mod
+                per_image_emb = torch.split(
+                    emb, batch_natoms.tolist()
+                )  # Embedding Mod
+                per_image_emb = [
+                    emb.numpy() for emb in per_image_emb
+                ]  # Embedding Mod
+
                 # evalAI only requires forces on free atoms
                 if results_file is not None:
                     _per_image_fixed = torch.split(
@@ -337,17 +354,21 @@ class ForcesTrainer(BaseTrainer):
                     per_image_forces = _per_image_free_forces
                     predictions["chunk_idx"].extend(_chunk_idx)
                 predictions["forces"].extend(per_image_forces)
+                predictions["emb"].extend(per_image_emb)  # Embedding Mod
             else:
                 predictions["energy"] = out["energy"].detach()
                 predictions["forces"] = out["forces"].detach()
                 return predictions
 
         predictions["forces"] = np.array(predictions["forces"])
+        predictions["emb"] = np.array(predictions["emb"])  # Embedding Mod
         predictions["chunk_idx"] = np.array(predictions["chunk_idx"])
         predictions["energy"] = np.array(predictions["energy"])
         predictions["id"] = np.array(predictions["id"])
         self.save_results(
-            predictions, results_file, keys=["energy", "forces", "chunk_idx"]
+            predictions,
+            results_file,
+            keys=["energy", "forces", "chunk_idx", "emb"],
         )
 
         if self.ema:
@@ -509,15 +530,16 @@ class ForcesTrainer(BaseTrainer):
     def _forward(self, batch_list):
         # forward pass.
         if self.config["model_attributes"].get("regress_forces", True):
-            out_energy, out_forces = self.model(batch_list)
+            out_energy, out_forces, out_emb = self.model(batch_list)
         else:
-            out_energy = self.model(batch_list)
+            out_energy, outu_emb = self.model(batch_list)
 
         if out_energy.shape[-1] == 1:
             out_energy = out_energy.view(-1)
 
         out = {
             "energy": out_energy,
+            "emb": out_emb,
         }
 
         if self.config["model_attributes"].get("regress_forces", True):

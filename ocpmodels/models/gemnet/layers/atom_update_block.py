@@ -190,11 +190,14 @@ class OutputBlock(AtomUpdateBlock):
         x = m * rbf_emb_E
 
         x_E = scatter(x, id_j, dim=0, dim_size=nAtoms, reduce="sum")
+
         # (nAtoms, emb_size_edge)
         x_E = self.scale_sum(m, x_E)
 
         for layer in self.seq_energy:
             x_E = layer(x_E)  # (nAtoms, emb_size_atom)
+        # x_E is the embedding I am looking for
+        emb = x_E  # Embedding Mod
 
         x_E = self.out_energy(x_E)  # (nAtoms, num_targets)
 
@@ -213,4 +216,4 @@ class OutputBlock(AtomUpdateBlock):
             x_F = 0
         # ----------------------------------------------------------------------------------------------- #
 
-        return x_E, x_F
+        return x_E, x_F, emb  # Embedding Mod

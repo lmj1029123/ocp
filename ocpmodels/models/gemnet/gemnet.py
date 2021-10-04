@@ -250,10 +250,10 @@ class GemNetT(torch.nn.Module):
         self.int_blocks = torch.nn.ModuleList(int_blocks)
 
         self.shared_parameters = [
-            (self.mlp_rbf3.linear.weight, self.num_blocks),
-            (self.mlp_cbf3.weight, self.num_blocks),
-            (self.mlp_rbf_h.linear.weight, self.num_blocks),
-            (self.mlp_rbf_out.linear.weight, self.num_blocks + 1),
+            (self.mlp_rbf3, self.num_blocks),
+            (self.mlp_cbf3, self.num_blocks),
+            (self.mlp_rbf_h, self.num_blocks),
+            (self.mlp_rbf_out, self.num_blocks + 1),
         ]
 
     def get_triplets(self, edge_index, num_atoms):
@@ -539,7 +539,7 @@ class GemNetT(torch.nn.Module):
         rbf_h = self.mlp_rbf_h(rbf)
         rbf_out = self.mlp_rbf_out(rbf)
 
-        E_t, F_st = self.out_blocks[0](h, m, rbf_out, idx_t)
+        # E_t, F_st = self.out_blocks[0](h, m, rbf_out, idx_t)
         # (nAtoms, num_targets), (nEdges, num_targets)
 
         for i in range(self.num_blocks):
@@ -558,10 +558,11 @@ class GemNetT(torch.nn.Module):
                 idx_t=idx_t,
             )  # (nAtoms, emb_size_atom), (nEdges, emb_size_edge)
 
-            E, F = self.out_blocks[i + 1](h, m, rbf_out, idx_t)
-            # (nAtoms, num_targets), (nEdges, num_targets)
-            F_st += F
-            E_t += E
+        E, F, emb = self.out_blocks[-1](h, m, rbf_out, idx_t)  # Embedding Mod
+
+        # (nAtoms, num_targets), (nEdges, num_targets)
+        F_st = F
+        E_t = E
 
         nMolecules = torch.max(batch) + 1
         if self.extensive:
@@ -603,10 +604,13 @@ class GemNetT(torch.nn.Module):
                         E_t.sum(), pos, create_graph=True
                     )[0]
                     # (nAtoms, 3)
-
-            return E_t, F_t  # (nMolecules, num_targets), (nAtoms, 3)
+            return (
+                E_t,
+                F_t,
+                emb,
+            )  # (nMolecules, num_targets), (nAtoms, 3) # Embedding Mod
         else:
-            return E_t
+            return E_t, emb  # Embedding Mod
 
     @property
     def num_params(self):
