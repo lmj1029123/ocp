@@ -1,3 +1,5 @@
+The directory is forked from the [ocp repository](https://github.com/Open-Catalyst-Project/ocp#:~:text=ocp%2Dmodels%20is%20the%20modeling,GemNet). The main difference is in the GemNet implementation. In this directory, only the atomic embeddings from the last interaction block are used to predict the atomic energy of chemical systems.
+
 # Open Catalyst Project models
 
 [![CircleCI](https://circleci.com/gh/Open-Catalyst-Project/ocp.svg?style=shield)](https://circleci.com/gh/Open-Catalyst-Project/ocp)
