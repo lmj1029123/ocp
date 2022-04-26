@@ -371,6 +371,8 @@ class EnergyTrainer(BaseTrainer):
 
     def _forward(self, batch_list):
         energy, emb = self.model(batch_list)
+#         print(self.model(batch_list))
+#         ds
         # energy, emb = self.model(batch_list)
         # print(emb.shape, energy.shape)
 
@@ -379,7 +381,7 @@ class EnergyTrainer(BaseTrainer):
 
         return {
             "energy": energy,
-            # "emb": emb,
+            "emb": emb,
         }
 
     def _compute_loss(self, out, batch_list):

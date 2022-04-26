@@ -532,7 +532,7 @@ class ForcesTrainer(BaseTrainer):
         if self.config["model_attributes"].get("regress_forces", True):
             out_energy, out_forces, out_emb = self.model(batch_list)
         else:
-            out_energy, outu_emb = self.model(batch_list)
+            out_energy, out_emb = self.model(batch_list)
 
         if out_energy.shape[-1] == 1:
             out_energy = out_energy.view(-1)

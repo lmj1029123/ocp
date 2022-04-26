@@ -321,8 +321,12 @@ class BaseTrainer(ABC):
         logging.info(f"Loading checkpoint from: {checkpoint_path}")
         map_location = torch.device("cpu") if self.cpu else self.device
         checkpoint = torch.load(checkpoint_path, map_location=map_location)
-        self.epoch = checkpoint.get("epoch", 0)
-        self.step = checkpoint.get("step", 0)
+        if self.config["optim"].get("finetune", False):
+            self.epoch = 0
+            self.step = 0
+        else:
+            self.epoch = checkpoint.get("epoch", 0)
+            self.step = checkpoint.get("step", 0)
 
         # Load model, optimizer, normalizer state dict.
         # if trained with ddp and want to load in non-ddp, modify keys from
@@ -350,6 +354,8 @@ class BaseTrainer(ABC):
                 )
             if self.scaler and checkpoint["amp"]:
                 self.scaler.load_state_dict(checkpoint["amp"])
+
+        
 
     def load_loss(self):
         self.loss_fn = {}

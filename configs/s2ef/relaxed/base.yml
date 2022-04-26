@@ -1,0 +1,22 @@
+trainer: forces
+
+dataset:
+
+  - src: /home/jovyan/dataset/relaxed/train # Training set
+    normalize_labels: False
+  - src: /home/jovyan/dataset/relaxed/val # validation set
+
+
+
+logger: tensorboard
+
+task:
+  dataset: trajectory_lmdb
+  description: "Regressing to energies and forces for DFT trajectories from OCP"
+  type: regression
+  metric: mae
+  labels:
+    - potential energy
+  grad_input: atomic forces
+  train_on_free_atoms: True
+  eval_on_free_atoms: True

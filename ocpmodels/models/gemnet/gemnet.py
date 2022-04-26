@@ -206,7 +206,7 @@ class GemNetT(torch.nn.Module):
             emb_size_atom, num_radial, emb_size_edge, activation=activation
         )
 
-        out_blocks = []
+#         out_blocks = []
         int_blocks = []
 
         # Interaction Blocks
@@ -230,9 +230,9 @@ class GemNetT(torch.nn.Module):
                 )
             )
 
-        for i in range(num_blocks + 1):
-            out_blocks.append(
-                OutputBlock(
+#         for i in range(num_blocks + 1):
+#             out_blocks.append(
+        self.out_block = OutputBlock(
                     emb_size_atom=emb_size_atom,
                     emb_size_edge=emb_size_edge,
                     emb_size_rbf=emb_size_rbf,
@@ -244,9 +244,9 @@ class GemNetT(torch.nn.Module):
                     scale_file=scale_file,
                     name=f"OutBlock_{i}",
                 )
-            )
+            
 
-        self.out_blocks = torch.nn.ModuleList(out_blocks)
+#         self.out_blocks = torch.nn.ModuleList(out_blocks)
         self.int_blocks = torch.nn.ModuleList(int_blocks)
 
         self.shared_parameters = [
@@ -558,7 +558,7 @@ class GemNetT(torch.nn.Module):
                 idx_t=idx_t,
             )  # (nAtoms, emb_size_atom), (nEdges, emb_size_edge)
 
-        E, F, emb = self.out_blocks[-1](h, m, rbf_out, idx_t)  # Embedding Mod
+        E, F, emb = self.out_block(h, m, rbf_out, idx_t)  # Embedding Mod
 
         # (nAtoms, num_targets), (nEdges, num_targets)
         F_st = F

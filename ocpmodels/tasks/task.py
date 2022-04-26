@@ -9,6 +9,8 @@ import os
 
 from ocpmodels.common.registry import registry
 from ocpmodels.trainers.forces_trainer import ForcesTrainer
+import pdb
+
 
 
 class BaseTask:
@@ -24,7 +26,8 @@ class BaseTask:
         self.chkpt_path = os.path.join(
             self.trainer.config["cmd"]["checkpoint_dir"], "checkpoint.pt"
         )
-
+        
+        
     def run(self):
         raise NotImplementedError
 
@@ -35,7 +38,6 @@ class TrainTask(BaseTask):
         self.trainer.train(
             disable_eval_tqdm=self.config.get("hide_eval_progressbar", False)
         )
-
 
 @registry.register_task("predict")
 class PredictTask(BaseTask):

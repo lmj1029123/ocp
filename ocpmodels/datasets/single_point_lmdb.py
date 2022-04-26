@@ -46,6 +46,8 @@ class SinglePointLmdbDataset(Dataset):
             f"{j}".encode("ascii") for j in range(self.env.stat()["entries"])
         ]
         self.transform = transform
+        mapping_path = '/home/jovyan/shared-scratch/mshuaibi/splits/splits_02_07/mappings/final_ref_energies_02_07_2021.pkl'
+        self.mapping = pickle.load(open(mapping_path, "rb"))
 
     def __len__(self):
         return len(self._keys)
@@ -59,7 +61,11 @@ class SinglePointLmdbDataset(Dataset):
             if self.transform is None
             else self.transform(data_object)
         )
-
+        
+        sid = data_object.sid
+        data_object.pos = data_object.pos_relaxed
+        data_object.y_relaxed = data_object.y_relaxed + self.mapping[f'random{sid}']
+        
         return data_object
 
     def connect_db(self, lmdb_path=None):
